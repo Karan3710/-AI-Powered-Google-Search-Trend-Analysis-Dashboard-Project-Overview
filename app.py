@@ -16,7 +16,7 @@ st.title("🤖 AI Powered Google Trends Keyword Analysis")
 # Load Dataset
 # =============================
 # Load CSV
-df = pd.read_csv(r"C:\Users\karan\Downloads\multiTimeline.csv", skiprows=2, header=None)
+df = pd.read_csv("multiTimeline.csv", skiprows=2, header=None)
 
 # Manually assign column names
 df.columns = [
@@ -181,4 +181,5 @@ st.download_button(
     df.to_csv(index=False),
     "google_trends_data.csv",
     "text/csv"
+
 )
