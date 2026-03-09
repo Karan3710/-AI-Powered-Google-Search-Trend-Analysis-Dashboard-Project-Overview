@@ -4,3 +4,5 @@ plotly
 pytrends
 tensorflow
 scikit-learn
+seaborn
+matplotlib
