@@ -1,185 +1,227 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import numpy as np
-from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
 import seaborn as sns
 import matplotlib.pyplot as plt
+from prophet import Prophet
+import sqlite3
+import streamlit_authenticator as stauth
+import random
 
-st.set_page_config(page_title="AI Google Trends Dashboard", layout="wide")
-
-st.title("🤖 AI Powered Google Trends Keyword Analysis")
+st.set_page_config(page_title="AI Trends SaaS", layout="wide")
 
 # =============================
-# Load Dataset
+# LOGIN SYSTEM
 # =============================
-# Load CSV
+names = ["Karan Dodia"]
+usernames = ["karan"]
+passwords = ["1234"]
+
+hashed_passwords = stauth.Hasher(passwords).generate()
+
+authenticator = stauth.Authenticate(
+    names, usernames, hashed_passwords,
+    "trend_dashboard", "abcdef", cookie_expiry_days=1
+)
+
+name, auth_status, username = authenticator.login("Login", "main")
+
+if auth_status == False:
+    st.error("Invalid credentials")
+    st.stop()
+
+if auth_status == None:
+    st.warning("Enter login details")
+    st.stop()
+
+st.success(f"Welcome {name}")
+
+# =============================
+# DATABASE
+# =============================
+conn = sqlite3.connect("user.db")
+c = conn.cursor()
+
+c.execute("""
+CREATE TABLE IF NOT EXISTS preferences (
+    user TEXT,
+    keyword TEXT
+)
+""")
+
+def save_pref(user, keyword):
+    c.execute("INSERT INTO preferences VALUES (?,?)", (user, keyword))
+    conn.commit()
+
+# =============================
+# LOAD DATA
+# =============================
 df = pd.read_csv("multiTimeline.csv", skiprows=2, header=None)
 
-# Manually assign column names
 df.columns = [
-    "Date",
-    "AI",
-    "Machine Learning",
-    "Data Science",
-    "Python",
-    "Deep Learning",
-    "Big Data",
-    "Neural Network",
-    "NLP"
+    "Date","AI","Machine Learning","Data Science","Python",
+    "Deep Learning","Big Data","Neural Network","NLP"
 ]
 
-# Convert Date column
 df["Date"] = pd.to_datetime(df["Date"])
-
-# Convert numeric columns
 df.iloc[:,1:] = df.iloc[:,1:].apply(pd.to_numeric, errors="coerce")
-
-# Fill missing values
 df = df.ffill()
-# =============================
-# Sidebar Keyword Selection
-# =============================
 
 keywords = list(df.columns[1:])
 
+# =============================
+# SIDEBAR
+# =============================
+st.sidebar.title("⚙ Controls")
+
+menu = ["Dashboard","Forecast","Settings"]
+choice = st.sidebar.selectbox("Menu", menu)
+
 selected_keywords = st.sidebar.multiselect(
-    "Choose Keywords",
-    keywords,
-    default=[keywords[0]]
+    "Select Keywords", keywords, default=[keywords[0]]
 )
 
-# =============================
-# KPI Cards
-# =============================
+start_date = st.sidebar.date_input("Start Date", df["Date"].min())
+end_date = st.sidebar.date_input("End Date", df["Date"].max())
 
-st.subheader("📌 Key Metrics")
-
-col1, col2, col3 = st.columns(3)
-
-col1.metric("Total Records", len(df))
-col2.metric("Keywords Available", len(keywords))
-col3.metric("Latest Date", str(df["Date"].max().date()))
+filtered_df = df[
+    (df["Date"] >= pd.to_datetime(start_date)) &
+    (df["Date"] <= pd.to_datetime(end_date))
+]
 
 # =============================
-# Trend Comparison Graph
+# DASHBOARD
 # =============================
+if choice == "Dashboard":
 
-st.subheader("📈 Keyword Trend Comparison")
+    st.title("📊 AI Trends Dashboard")
 
-fig = px.line(
-    df,
-    x="Date",
-    y=selected_keywords,
-    title="Google Search Trend Comparison"
-)
+    # KPI
+    col1, col2, col3, col4 = st.columns(4)
 
-st.plotly_chart(fig, use_container_width=True)
+    col1.metric("Records", len(filtered_df))
+    col2.metric("Keywords", len(keywords))
+    col3.metric("Latest", filtered_df["Date"].max().strftime("%Y-%m-%d"))
+    col4.metric("Peak", int(filtered_df[keywords].max().max()))
+
+    # Trend
+    st.subheader("📈 Trends")
+
+    fig = px.line(
+        filtered_df,
+        x="Date",
+        y=selected_keywords,
+        template="plotly_dark"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Layout
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("🔥 Correlation")
+        corr = filtered_df[keywords].corr()
+        fig2, ax = plt.subplots()
+        sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
+        st.pyplot(fig2)
+
+    with col2:
+        st.subheader("🏆 Top Days")
+        top = filtered_df.sort_values(
+            by=selected_keywords[0], ascending=False
+        ).head(10)
+        st.dataframe(top)
+
+    # Monthly Heatmap
+    st.subheader("📊 Monthly Heatmap")
+
+    temp = filtered_df.copy()
+    temp["Month"] = temp["Date"].dt.month
+    temp["Year"] = temp["Date"].dt.year
+
+    pivot = temp.pivot_table(
+        values=selected_keywords[0],
+        index="Month",
+        columns="Year",
+        aggfunc="mean"
+    )
+
+    fig3, ax = plt.subplots()
+    sns.heatmap(pivot, cmap="coolwarm", annot=True, ax=ax)
+    st.pyplot(fig3)
+
+    # Ranking
+    st.subheader("🎯 Trend Score")
+
+    scores = {
+        k: round((filtered_df[k].iloc[-1] / filtered_df[k].mean()) * 100, 2)
+        for k in keywords
+    }
+
+    score_df = pd.DataFrame({
+        "Keyword": scores.keys(),
+        "Score": scores.values()
+    }).sort_values(by="Score", ascending=False)
+
+    st.dataframe(score_df)
+
+    st.success(f"🔥 Top: {score_df.iloc[0]['Keyword']}")
+
+    # Country
+    st.subheader("🌍 Country View")
+
+    countries = ["India","USA","UK","Germany","Canada"]
+
+    country_df = pd.DataFrame({
+        "Country": countries,
+        "Interest": [random.randint(50,100) for _ in countries]
+    })
+
+    st.plotly_chart(
+        px.bar(country_df, x="Country", y="Interest", template="plotly_dark")
+    )
 
 # =============================
-# Correlation Heatmap
+# FORECAST
 # =============================
+elif choice == "Forecast":
 
-st.subheader("🔥 Keyword Correlation Heatmap")
+    st.title("🔮 Forecast")
 
-corr = df[keywords].corr()
+    if selected_keywords:
+        keyword = selected_keywords[0]
 
-fig2, ax = plt.subplots(figsize=(8,6))
+        prophet_df = filtered_df[["Date", keyword]].rename(
+            columns={"Date": "ds", keyword: "y"}
+        )
 
-sns.heatmap(
-    corr,
-    annot=True,
-    cmap="coolwarm",
-    ax=ax
-)
+        model = Prophet()
+        model.fit(prophet_df)
 
-st.pyplot(fig2)
+        future = model.make_future_dataframe(periods=30)
+        forecast = model.predict(future)
 
-# =============================
-# AI Prediction
-# =============================
-
-if selected_keywords:
-
-    keyword = selected_keywords[0]
-
-    st.subheader(f"🤖 AI Prediction for '{keyword}'")
-
-    values = df[keyword].dropna().values.reshape(-1,1)
-
-    if len(values) < 20:
-
-        st.warning("Not enough data to train AI model")
-
-    else:
-
-        scaler = MinMaxScaler()
-
-        scaled_data = scaler.fit_transform(values)
-
-        X = []
-        y = []
-
-        sequence_length = 10
-
-        for i in range(sequence_length, len(scaled_data)):
-            X.append(scaled_data[i-sequence_length:i])
-            y.append(scaled_data[i])
-
-        X = np.array(X)
-        y = np.array(y)
-
-    from tensorflow.keras import Input
-
-    model = Sequential([
-            Input(shape=(X.shape[1],1)),
-            LSTM(50, activation='relu'),
-            Dense(1)
-         ])
-
-    model.compile(optimizer='adam', loss='mse')
-    if len(X) == 0:
-     st.warning("Not enough data to train the model.")
-else:
-    model.fit(X, y, epochs=5, verbose=0)
-
-    last_sequence = scaled_data[-sequence_length:]
-
-    last_sequence = last_sequence.reshape(1, sequence_length, 1)
-
-    prediction = model.predict(last_sequence)
-
-    prediction = scaler.inverse_transform(prediction)
-
-    st.success(
-        f"Predicted next search interest for {keyword}: {round(prediction[0][0],2)}"
+        st.plotly_chart(
+            px.line(forecast, x="ds", y="yhat", template="plotly_dark")
         )
 
 # =============================
-# Top Search Days
+# SETTINGS
 # =============================
+elif choice == "Settings":
 
-st.subheader("🏆 Highest Search Interest Days")
+    st.title("⚙ Settings")
 
-top = df.sort_values(
-    by=selected_keywords[0],
-    ascending=False
-).head(10)
-
-st.dataframe(top)
+    if st.button("Save Preference"):
+        save_pref(username, selected_keywords[0])
+        st.success("Saved!")
 
 # =============================
-# Download Dataset
+# DOWNLOAD
 # =============================
-
-st.subheader("⬇ Download Dataset")
-
-st.download_button(
-    "Download CSV",
-    df.to_csv(index=False),
-    "google_trends_data.csv",
+st.sidebar.download_button(
+    "Download Data",
+    filtered_df.to_csv(index=False),
+    "trends.csv",
     "text/csv"
-
 )
