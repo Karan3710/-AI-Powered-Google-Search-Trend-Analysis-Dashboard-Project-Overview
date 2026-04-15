@@ -140,32 +140,34 @@ if choice == "Dashboard":
     sns.heatmap(pivot, cmap="coolwarm", annot=True, ax=ax)
     st.pyplot(fig3)
 
-    # Ranking
-    st.subheader("🎯 Trend Score")
+   
+# =============================
+# TREND SCORE
+# =============================
+st.subheader("🎯 Trend Score")
 
-    scores = {
+scores = {}
 
-     for key in keywords:
+for key in keywords:
 
-     recent_avg = filtered_df[key].tail(5).mean()
-     overall_avg = filtered_df[key].mean()
+    recent_avg = filtered_df[key].tail(5).mean()
+    overall_avg = filtered_df[key].mean()
 
-     if overall_avg == 0:
+    if overall_avg == 0:
         score = 0
-     else:
+    else:
         score = round((recent_avg / overall_avg) * 100, 2)
 
     scores[key] = score
-    }
 
-    score_df = pd.DataFrame({
-        "Keyword": scores.keys(),
-        "Score": scores.values()
-    }).sort_values(by="Score", ascending=False)
+score_df = pd.DataFrame({
+    "Keyword": scores.keys(),
+    "Score": scores.values()
+}).sort_values(by="Score", ascending=False)
 
-    st.dataframe(score_df)
+st.dataframe(score_df)
 
-    st.success(f"🔥 Top: {score_df.iloc[0]['Keyword']}")
+st.success(f"🔥 Top: {score_df.iloc[0]['Keyword']}")
 
     # Country
     st.subheader("🌍 Country View")
