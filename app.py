@@ -17,8 +17,7 @@ names = ["Karan Dodia"]
 usernames = ["karan"]
 passwords = ["1234"]
 
-hashed_passwords = stauth.Hasher(passwords).generate()
-
+hashed_passwords = stauth.Hasher.hash_passwords(passwords)
 authenticator = stauth.Authenticate(
     names, usernames, hashed_passwords,
     "trend_dashboard", "abcdef", cookie_expiry_days=1
