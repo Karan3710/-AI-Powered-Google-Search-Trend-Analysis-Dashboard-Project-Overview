@@ -117,10 +117,17 @@ if choice == "Dashboard":
 
     with col2:
         st.subheader("🏆 Top Days")
-        top = filtered_df.sort_values(
-            by=selected_keywords[0], ascending=False
-        ).head(10)
-        st.dataframe(top)
+        if selected_keywords:
+
+         top = filtered_df.sort_values(
+         by=selected_keywords[0],
+         ascending=False
+         ).head(10)
+
+         st.dataframe(top)
+
+        else:
+         st.warning("⚠ Please select at least one keyword")
 
     # Monthly Heatmap
     st.subheader("📊 Monthly Heatmap")
