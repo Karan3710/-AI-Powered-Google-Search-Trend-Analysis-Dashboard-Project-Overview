@@ -144,8 +144,18 @@ if choice == "Dashboard":
     st.subheader("🎯 Trend Score")
 
     scores = {
-        k: round((filtered_df[k].iloc[-1] / filtered_df[k].mean()) * 100, 2)
-        for k in keywords
+
+     for key in keywords:
+
+     recent_avg = filtered_df[key].tail(5).mean()
+     overall_avg = filtered_df[key].mean()
+
+     if overall_avg == 0:
+        score = 0
+     else:
+        score = round((recent_avg / overall_avg) * 100, 2)
+
+    scores[key] = score
     }
 
     score_df = pd.DataFrame({
