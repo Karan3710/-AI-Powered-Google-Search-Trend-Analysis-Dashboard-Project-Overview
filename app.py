@@ -13,28 +13,19 @@ st.set_page_config(page_title="AI Trends SaaS", layout="wide")
 # =============================
 # LOGIN SYSTEM
 # =============================
-names = ["Karan Dodia"]
-usernames = ["karan"]
-passwords = ["1234"]
+# =============================
+# SIMPLE LOGIN SYSTEM
+# =============================
+st.sidebar.title("🔐 Login")
 
-hashed_passwords =["$2b$12$5ysRaVBV/CUTDr5I/wtIruG55PFHn5FCMRGV6zyMJ0HgMJGz6uU9m"]
-authenticator = stauth.Authenticate(
-    names, usernames, hashed_passwords,
-    "trend_dashboard", "abcdef", cookie_expiry_days=1
-)
+username = st.sidebar.text_input("Username")
+password = st.sidebar.text_input("Password", type="password")
 
-name, auth_status, username = authenticator.login("Login", "main")
-
-if auth_status == False:
-    st.error("Invalid credentials")
+if username != "karan" or password != "1234":
+    st.warning("Enter correct username and password")
     st.stop()
 
-if auth_status == None:
-    st.warning("Enter login details")
-    st.stop()
-
-st.success(f"Welcome {name}")
-
+st.sidebar.success("Logged in successfully")
 # =============================
 # DATABASE
 # =============================
