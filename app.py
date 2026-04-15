@@ -170,7 +170,7 @@ st.dataframe(score_df)
 st.success(f"🔥 Top: {score_df.iloc[0]['Keyword']}")
 
     # Country
-    st.subheader("🌍 Country View")
+st.subheader("🌍 Country View")
 
     countries = ["India","USA","UK","Germany","Canada"]
 
@@ -179,7 +179,7 @@ st.success(f"🔥 Top: {score_df.iloc[0]['Keyword']}")
         "Interest": [random.randint(50,100) for _ in countries]
     })
 
-    st.plotly_chart(
+ st.plotly_chart(
         px.bar(country_df, x="Country", y="Interest", template="plotly_dark")
     )
 # =============================
