@@ -6,4 +6,4 @@ prophet
 scikit-learn
 seaborn
 matplotlib
-streamlit-authenticator
+streamlit-authenticator==0.3.2
