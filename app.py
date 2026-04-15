@@ -192,7 +192,7 @@ for keyword in selected_keywords:
     if len(selected_keywords) > 3:
     st.warning("⚠ Select max 3 keywords for faster forecast")
     
-    if len(prophet_df) < 10:
+    elif len(prophet_df) < 10:
         st.warning(f"Not enough data for {keyword}")
         continue
 
