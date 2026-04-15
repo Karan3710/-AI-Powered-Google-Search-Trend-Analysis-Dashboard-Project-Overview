@@ -170,47 +170,46 @@ if choice == "Dashboard":
     st.plotly_chart(
         px.bar(country_df, x="Country", y="Interest", template="plotly_dark")
     )
-
 # =============================
 # FORECAST
 # =============================
+elif choice == "Forecast":
 
-st.subheader("🔮 Forecast (30 Days)")
+    st.title("🔮 Forecast (30 Days)")
 
-for keyword in selected_keywords:
-
-    st.markdown(f"### 📊 Forecast for {keyword}")
-
-    prophet_df = filtered_df[["Date", keyword]].rename(
-        columns={"Date": "ds", keyword: "y"}
-    )
-
-    # Remove NaN values
-    prophet_df = prophet_df.dropna()
-
-    # Skip if not enough data
     if len(selected_keywords) > 3:
-       st.warning("⚠ Select max 3 keywords for faster forecast")
-    
-    if len(prophet_df) < 10:
-        st.warning(f"Not enough data for {keyword}")
-        continue
+        st.warning("⚠ Select max 3 keywords for faster forecast")
 
-    model = Prophet()
-    model.fit(prophet_df)
+    for keyword in selected_keywords:
 
-    future = model.make_future_dataframe(periods=30)
-    forecast = model.predict(future)
+        st.markdown(f"### 📊 Forecast for {keyword}")
 
-    fig = px.line(
-        forecast,
-        x="ds",
-        y="yhat",
-        title=f"30-Day Forecast for {keyword}",
-        template="plotly_dark"
-    )
+        prophet_df = filtered_df[["Date", keyword]].rename(
+            columns={"Date": "ds", keyword: "y"}
+        )
 
-    st.plotly_chart(fig, use_container_width=True)
+        prophet_df = prophet_df.dropna()
+
+        if len(prophet_df) < 10:
+            st.warning(f"Not enough data for {keyword}")
+            continue
+
+        model = Prophet()
+        model.fit(prophet_df)
+
+        future = model.make_future_dataframe(periods=30)
+        forecast = model.predict(future)
+
+        fig = px.line(
+            forecast,
+            x="ds",
+            y="yhat",
+            title=f"30-Day Forecast for {keyword}",
+            template="plotly_dark"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
 # =============================
 # SETTINGS
 # =============================
