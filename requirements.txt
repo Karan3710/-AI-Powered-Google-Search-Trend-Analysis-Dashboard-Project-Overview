@@ -2,7 +2,8 @@ streamlit
 pandas
 plotly
 pytrends
-tensorflow
+prophet
 scikit-learn
 seaborn
 matplotlib
+streamlit-authenticator
