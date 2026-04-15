@@ -78,7 +78,9 @@ filtered_df = df[
     (df["Date"] >= pd.to_datetime(start_date)) &
     (df["Date"] <= pd.to_datetime(end_date))
 ]
-
+if not selected_keywords:
+    st.warning("⚠ Please select at least one keyword from sidebar")
+    st.stop()
 # =============================
 # DASHBOARD
 # =============================
