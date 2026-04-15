@@ -140,48 +140,48 @@ if choice == "Dashboard":
     sns.heatmap(pivot, cmap="coolwarm", annot=True, ax=ax)
     st.pyplot(fig3)
 
-   
-# =============================
-# TREND SCORE
-# =============================
-st.subheader("🎯 Trend Score")
+    # =============================
+    # TREND SCORE (MOVE INSIDE)
+    # =============================
+    st.subheader("🎯 Trend Score")
 
-scores = {}
+    scores = {}
 
-for key in keywords:
+    for key in keywords:
+        recent_avg = filtered_df[key].tail(5).mean()
+        overall_avg = filtered_df[key].mean()
 
-    recent_avg = filtered_df[key].tail(5).mean()
-    overall_avg = filtered_df[key].mean()
+        if overall_avg == 0:
+            score = 0
+        else:
+            score = round((recent_avg / overall_avg) * 100, 2)
 
-    if overall_avg == 0:
-        score = 0
-    else:
-        score = round((recent_avg / overall_avg) * 100, 2)
+        scores[key] = score
 
-    scores[key] = score
+    score_df = pd.DataFrame({
+        "Keyword": scores.keys(),
+        "Score": scores.values()
+    }).sort_values(by="Score", ascending=False)
 
-score_df = pd.DataFrame({
-    "Keyword": scores.keys(),
-    "Score": scores.values()
-}).sort_values(by="Score", ascending=False)
+    st.dataframe(score_df)
 
-st.dataframe(score_df)
+    st.success(f"🔥 Top: {score_df.iloc[0]['Keyword']}")
 
-st.success(f"🔥 Top: {score_df.iloc[0]['Keyword']}")
+    # =============================
+    # COUNTRY VIEW (MOVE INSIDE)
+    # =============================
+    st.subheader("🌍 Country View")
 
-    # Country
-st.subheader("🌍 Country View")
+    countries = ["India","USA","UK","Germany","Canada"]
 
-countries = ["India","USA","UK","Germany","Canada"]
+    country_df = pd.DataFrame({
+        "Country": countries,
+        "Interest": [random.randint(50,100) for _ in countries]
+    })
 
-country_df = pd.DataFrame({
-    "Country": countries,
-    "Interest": [random.randint(50,100) for _ in countries]
-})
-
-st.plotly_chart(
-    px.bar(country_df, x="Country", y="Interest", template="plotly_dark")
-)
+    st.plotly_chart(
+        px.bar(country_df, x="Country", y="Interest", template="plotly_dark")
+    )
 # =============================
 # FORECAST
 # =============================
