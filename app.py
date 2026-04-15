@@ -174,27 +174,43 @@ if choice == "Dashboard":
 # =============================
 # FORECAST
 # =============================
-elif choice == "Forecast":
 
-    st.title("🔮 Forecast")
+st.subheader("🔮 Forecast (30 Days)")
 
-    if selected_keywords:
-        keyword = selected_keywords[0]
+for keyword in selected_keywords:
 
-        prophet_df = filtered_df[["Date", keyword]].rename(
-            columns={"Date": "ds", keyword: "y"}
-        )
+    st.markdown(f"### 📊 Forecast for {keyword}")
 
-        model = Prophet()
-        model.fit(prophet_df)
+    prophet_df = filtered_df[["Date", keyword]].rename(
+        columns={"Date": "ds", keyword: "y"}
+    )
 
-        future = model.make_future_dataframe(periods=30)
-        forecast = model.predict(future)
+    # Remove NaN values
+    prophet_df = prophet_df.dropna()
 
-        st.plotly_chart(
-            px.line(forecast, x="ds", y="yhat", template="plotly_dark")
-        )
+    # Skip if not enough data
+    if len(selected_keywords) > 3:
+    st.warning("⚠ Select max 3 keywords for faster forecast")
+    
+    if len(prophet_df) < 10:
+        st.warning(f"Not enough data for {keyword}")
+        continue
 
+    model = Prophet()
+    model.fit(prophet_df)
+
+    future = model.make_future_dataframe(periods=30)
+    forecast = model.predict(future)
+
+    fig = px.line(
+        forecast,
+        x="ds",
+        y="yhat",
+        title=f"30-Day Forecast for {keyword}",
+        template="plotly_dark"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 # =============================
 # SETTINGS
 # =============================
