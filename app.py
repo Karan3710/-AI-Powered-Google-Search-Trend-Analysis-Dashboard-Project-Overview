@@ -172,9 +172,9 @@ st.success(f"🔥 Top: {score_df.iloc[0]['Keyword']}")
     # Country
 st.subheader("🌍 Country View")
 
-    countries = ["India","USA","UK","Germany","Canada"]
+countries = ["India","USA","UK","Germany","Canada"]
 
-    country_df = pd.DataFrame({
+country_df = pd.DataFrame({
         "Country": countries,
         "Interest": [random.randint(50,100) for _ in countries]
     })
