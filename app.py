@@ -5,7 +5,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from prophet import Prophet
 import sqlite3
-import streamlit_authenticator as stauth
 import random
 
 st.set_page_config(page_title="AI Trends SaaS", layout="wide")
